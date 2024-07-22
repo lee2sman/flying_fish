@@ -246,7 +246,7 @@ bound = notes[note];
     }
     
   }
-  Serial.println("Executing Flying2()"); 
+  Serial.println("Executing Turingmachine()"); 
 }
 
 void FlyingFish_tonic() {
