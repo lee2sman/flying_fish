@@ -46,7 +46,6 @@ float note9 = pulse / (49.0/32.0);
 float note10 = pulse / (441.0/256.0);
 float note11 = pulse / (7.0/4.0);
 float note12 = pulse / (63.0/32.0);
-
 float note13 = pulse / (2.0/1.0);
 float note14 = pulse / (33.0/16.0);
 float note15 = pulse / (9.0/4.0);
@@ -60,19 +59,21 @@ float note22 = pulse / (441.0/128.0);
 float note23 = pulse / (7.0/2.0);
 float note24 = pulse / (63.0/16.0);
 
-
 float noteTable[24] = {
   note1, note2, note3, note4, note5, note6, note7, note8, note9, note10, note11, note12, 
   note13, note14, note15, note16, note17, note18, note19, note20, note21, note22, note23, note24 
 };
 
-
-
-
 int weights[24] = {20, 1, 1, 1, 1, 1, 1, 20, 1, 1, 20, 1, 20, 1, 1, 1, 1, 1, 1, 20, 1, 1, 20, 1};
 /*by increasing numbers for each index in the weighted array, you make an item more likely to be chosen. 
 zero for no choices, all 1s for regular random algo*/
 
+//initial notes
+int note=0;
+int notes[] = {
+  note1, note2, note3, note4, note5
+};
+int oldthermal;
 
 //karplus strong implementation
 ISR(TIMER1_COMPA_vect) {
@@ -185,6 +186,67 @@ int weightedRandom(int* weights, int width) {
     }
   }
   return width - 1;
+}
+
+void turing_machine() {
+  int j = 1;
+  for (int i = 0; i > -1; i = i + j) {
+    // Wraps entire rhythm structure in this loop.
+    // Set up a timer which will add infinitely to itself.
+    if (i == 30) { // Catch the edge of the timer!
+      j = -1;     // Switch direction at the peak.
+    }
+
+    LED_PORT ^= 1 << LED_BIT; // Toggles an LED for debug purposes.
+    trig = true;              // True at the trigger fires a Karplus grain.
+
+//choose new random note for array of notes
+   int chance = random(100);
+   int newNoteFromTable = random(24);
+   if (chance<8){
+     int changeNote = random(0, 5);
+     notes[changeNote]=noteTable[newNoteFromTable];
+   }
+
+    // advance notes in array
+   // int tab = weightedRandom(weights, 16); // Critical note choice line of code.
+    int tab=0;
+    int thermal = map(thermistor, 0, 1023, 1, 15); // Attenuate the thermal variation — use analogRead(0).
+    pulse = thermal;
+
+
+//WHICH NOTE?
+note++;
+if (note > (sizeof(notes) / sizeof(notes[0]))) {
+  note=0;
+}
+bound = notes[note];
+    // Bound = noteTable[tab] + thermal; // Put a little thermal variation on the pitch.
+    //bound = noteTable[tab]; // No thermal variation on the pitch.
+    bound = bound / 1; //choose where to put the tonic.
+
+
+    // LOPASS FILTERING
+    // int value = solarpanel; // Set up an analog input. Use sensor 5 for the thermistor!
+    int value = random(0, 1023); // Put a random articulator variable onto the lopass input.
+    float falue = map(value, 0, 1023, 1, 3000) / 1000.0; // Shift the value to between 0.0 and 3.0.
+    lowpass = falue; // Route that value to the lopass variable.
+
+    // RHYTHMIC ARTICULATION
+    // bound = bound/5;
+    int bond = bound * i; // Takes the bound, multiplies it by the expanding variable, will go to 30!
+    int vari = i * 3;
+    bond = bond + vari;
+    bond = bond / 5;
+    delay(bond);
+ // Check for button press and exit loop if pressed
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      Serial.println("Button pressed. Exiting Flying1()");
+      break;
+    }
+    
+  }
+  Serial.println("Executing Flying2()"); 
 }
 
 void FlyingFish_tonic() {
@@ -368,7 +430,8 @@ void FlyingFish_random() {
 void loop() {
   // Check for button press and update the mode
   if (digitalRead(BUTTON_PIN) == LOW) {
-    mode = (mode % 4) + 1; // Cycle through modes 1, 2, 3, 4
+  //  mode = (mode % 4) + 1; // Cycle through modes 1, 2, 3, 4
+    mode=1;
     Serial.print("Switched to Program ");
     Serial.println(mode);
        // Write the current mode to EEPROM
@@ -379,7 +442,8 @@ void loop() {
   // Call the appropriate program based on the mode
   switch (mode) {
     case 1:
-      FlyingFish_tonic();
+   //   FlyingFish_tonic();
+     turing_machine();
       break;
     case 2:
       FlyingFish_octaveup();
