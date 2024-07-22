@@ -249,6 +249,42 @@ bound = notes[note];
   Serial.println("Executing Turingmachine()"); 
 }
 
+void pitch_surfer() {
+    LED_PORT ^= 1 << LED_BIT; // Toggles an LED for debug purposes.
+    trig = true;              // True at the trigger fires a Karplus grain.
+
+    // Note Choice
+    int tab = weightedRandom(weights, 16); // Critical note choice line of code.
+    int thermal = map(thermistor, 0, 1023, 1, 23); // Attenuate the thermal variation — use analogRead(0).
+    pulse = thermal;
+
+    // Bound = noteTable[tab] + thermal; // Put a little thermal variation on the pitch.
+    bound = noteTable[tab]; // No thermal variation on the pitch.
+    bound = bound / 1; //choose where to put the tonic.
+
+    // LOPASS FILTERING
+    // int value = solarpanel; // Set up an analog input. Use sensor 5 for the thermistor!
+    int value = random(0, 1023); // Put a random articulator variable onto the lopass input.
+    float falue = map(value, 0, 1023, 1, 3000) / 1000.0; // Shift the value to between 0.0 and 3.0.
+    lowpass = falue; // Route that value to the lopass variable.
+
+    // RHYTHMIC ARTICULATION
+    // bound = bound/5;
+    int bond = bound * i; // Takes the bound, multiplies it by the expanding variable, will go to 30!
+    int vari = i * 3;
+    bond = bond + vari;
+    bond = bond / 5;
+    delay(bond);
+ // Check for button press and exit loop if pressed
+    if (digitalRead(BUTTON_PIN) == LOW) {
+      Serial.println("Button pressed. Exiting Flying1()");
+      break;
+    }
+    
+  }
+  Serial.println("Executing Flying2()"); 
+}
+
 void FlyingFish_tonic() {
   int j = 1;
   for (int i = 0; i > -1; i = i + j) {
